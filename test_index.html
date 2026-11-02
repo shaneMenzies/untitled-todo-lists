@@ -1,0 +1,78 @@
+<html>
+  <head>
+    <script type="importmap">
+      {
+        "imports": {
+          "react": "https://esm.sh/react@latest?dev",
+          "react-dom/client": "https://esm.sh/react-dom@latest/client?dev",
+          "react/jsx-runtime": "https://esm.sh/react@latest/jsx-runtime?dev"
+        }
+      }
+    </script>
+    <script src="https://unpkg.com/@babel/standalone@latest/babel.min.js"></script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="text/babel" data-type="module" data-presets="react">
+      import React from 'react';
+      import { createRoot } from 'react-dom/client';
+
+      function CoolThing(props) {
+        return <h2>{'text' in props ? props.text : 'This is a cool thing'}</h2>;
+      }
+
+      {'Ada Lovelace' : 0, 'Grace Hopper' : 0}
+
+      function HomePage() {
+        const [data, setData] = React.useState([
+            ['Ada Lovelace', 0],
+            ['Grace Hopper', 0],
+            ['Margaret Hamilton', 0],
+            ['chuck bingle', 0]
+        ]);
+
+        function handleAdd(i) {
+            console.log('Adding on ', i);
+            data[i][1] += 1;
+            console.log(data);
+            setData(data);
+        }
+
+        function handleAddGood(i) {
+            console.log('Adding on ', i);
+            let new_data = data.slice();
+            new_data[i][1] += 1;
+            console.log(new_data);
+            setData(new_data);
+        }
+
+        function addName(newName) {
+            let new_data = data.slice();
+            new_data.push([newName, 0]);
+            console.log(new_data);
+            setData(new_data);
+        }
+         
+        return (
+            <div>
+              <CoolThing text='bingus' />
+              <ul>
+                {data.map(([name, count], i) => (
+                  <li>{name} - {count} - <button onClick={() => {handleAdd(i);}}>Add</button></li>
+                ))}
+              </ul>
+              <input type="text" name="new_name" id="new_name" />
+              <button onClick={() => {
+                addName(new_name.value);
+                new_name.value = '';
+              }}>Add new name</button>
+            </div>
+        );
+      }
+ 
+      const domNode = document.getElementById('app');
+      const root = createRoot(domNode);
+      root.render(<HomePage />);
+    </script>
+  </body>
+</html>
