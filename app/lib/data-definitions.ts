@@ -1,19 +1,22 @@
 
 export type UserData = {
-    id: number,
-    lists: number[]
+    id: number;
+    lists: number[];
 };
 
 export type ToDoListData = {
-    id: number,
-    name: string,
-    entries: number[]
+    listID: number;
+    listName: string;
+    entryIDs: number[];
 };
 
 export type ToDoEntryData = {
-    list_id: number,
-    entry_id: number,
-    checked: boolean,
-    description: string,
-    children: number[]
+    entryID: number;
+    checked: boolean;
+    description: string;
+};
+
+export type EntryChildrenData = {
+    parentID: number;
+    childID: number;
 };

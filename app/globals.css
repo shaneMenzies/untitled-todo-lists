@@ -1,8 +1,18 @@
 @import "tailwindcss";
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --tea-green: #ccf5acff;
+  --celadon: #bad29fff;
+  --lavender-grey: #808a9fff;
+  --dusk-blue: #2c497fff;
+  --dark-amethyst: #3d2b56ff;
+
+  --background: var(--lavender-grey);
+  --foreground: white;
 }
 
 @theme inline {
@@ -14,8 +24,14 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --tea-green: #ccf5acff;
+    --celadon: #bad29fff;
+    --lavender-grey: #808a9fff;
+    --dusk-blue: #2c497fff;
+    --dark-amethyst: #3d2b56ff;
+
+    --background: var(--dark-amethyst);
+    --foreground: white;
   }
 }
 
