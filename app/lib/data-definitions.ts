@@ -1,9 +1,4 @@
 
-export type UserData = {
-    id: number;
-    lists: number[];
-};
-
 export type ToDoListData = {
     listID: number;
     listName: string;

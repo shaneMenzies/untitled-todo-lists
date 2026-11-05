@@ -3,19 +3,22 @@
 import {useEffect, useState} from 'react';
 
 import CoolList from './ui/cool-list';
-import {queryListEntries} from './lib/queries.ts';
+import ToDoList from './ui/todo-list.tsx';
+import {fetchList} from './lib/fetches.ts';
+import {ToDoListState} from './lib/definitions.ts';
 
 function CoolThing(props) {
     return <h2>{'text' in props ? props.text : 'This is a cool thing'}</h2>;
 }
 
 export default function Home() {
-    const [idList, updateIDList] = useState([]);
+    const [testList, updateTestList] = useState<ToDoListState>();
 
     useEffect(() => {
-        queryListEntries(100).then((list) => {
-            updateIDList(list);
-            console.log("new list: ", list);
+        fetchList(104).then((list) => {
+            console.log("new list: ", typeof list);
+            updateTestList(list);
+            console.log("updated list value: ", typeof testList);
         });
     
       return () => {
@@ -25,11 +28,7 @@ export default function Home() {
 
     return (
         <div>
-            <ul>
-                {idList.map((id, i) => {
-                    return <li key={i}>{id.entryID} - {id.checked ? "Done" : "Not Done"} - {id.description}</li>
-                })} 
-            </ul>
+            {testList != null ? (<ToDoList listDataFn={() => {console.log(testList); return testList;}} />) : (<p>Loading List...</p>)}
             <CoolList />
         </div>
     );

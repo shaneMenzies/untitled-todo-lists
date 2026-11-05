@@ -39,6 +39,48 @@ export async function queryListEntries(listID: number): Array<ToDoEntryData> {
     }
 }
 
+export async function queryListTopLevelEntries(listID: number): Array<ToDoEntryData> {
+    try {
+        const query = `SELECT * FROM ToDoEntry 
+                        WHERE listID = ?
+                            AND entryID NOT IN 
+                                (SELECT childID FROM EntryChildren WHERE listID = ?)
+                            ORDER BY entryID ASC`;
+        const [rows, fields] = await pool.execute(query, [listID, listID]);
+        const results = rows.map(
+            (x) => {return {
+                entryID: x.entryID, checked: x.checked[0] == 1, description: x.description
+            }}
+        );
+        console.log(results);
+        return results
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+export async function queryListChildLevelEntries(listID: number): Array<[number, ToDoEntryData]> {
+    try {
+        const query = `SELECT ToDoEntry.listID, parentID, childID, checked, description  
+                        FROM (ToDoEntry
+                            JOIN EntryChildren
+                            ON ToDoEntry.listID = EntryChildren.listID
+                            AND ToDoEntry.entryID = EntryChildren.childID)
+                        WHERE ToDoEntry.listID = ?
+                        ORDER BY parentID ASC`;
+        const [rows, fields] = await pool.execute(query, [listID]);
+        const results = rows.map(
+            (x) => {return [x.parentID, {
+                entryID: x.childID, checked: x.checked[0] == 1, description: x.description
+            }]}
+        );
+        console.log(results);
+        return results
+    } catch (err) {
+        console.log(err);
+    }
+}
+
 export async function queryListEntryChildren(listID: number): Array<EntryChildrenData> {
     try {
         const query = 'SELECT * FROM EntryChildren WHERE listID = ? ORDER BY parentID ASC';
