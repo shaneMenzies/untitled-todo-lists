@@ -22,10 +22,10 @@ CREATE TABLE EntryChildren (
     parentID INT NOT NULL,
     childID INT NOT NULL,
     CONSTRAINT EntryChildrenEntryPK PRIMARY KEY (listID, parentID, childID),
-    CONSTRAINT EndryChildrenListFK FOREIGN KEY(listID) 
+    CONSTRAINT EntryChildrenListFK FOREIGN KEY(listID) 
         REFERENCES ToDoList(listID),
-    CONSTRAINT EndryChildrenParentFK FOREIGN KEY(listID, parentID) 
+    CONSTRAINT EntryChildrenParentFK FOREIGN KEY(listID, parentID) 
         REFERENCES ToDoEntry(listID, entryID),
-    CONSTRAINT EndryChildrenChildFK FOREIGN KEY(listID, childID) 
+    CONSTRAINT EntryChildrenChildFK FOREIGN KEY(listID, childID) 
         REFERENCES ToDoEntry(listID, entryID)
 );

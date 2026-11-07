@@ -7,7 +7,6 @@ import {queryListName, queryListTopLevelEntries, queryListChildLevelEntries} fro
 export async function fetchEntryChildrenMap(listID: number): Map<number, Map<number, ToDoEntryData>> {
     try {
         const vals = await queryListChildLevelEntries(listID);
-        console.log(vals);
         const map = new Map<number, ToDoEntryData[]>();
         vals.forEach(
             ([parentID, val]) => {
@@ -30,7 +29,6 @@ function buildEntry(listID: number, entry: ToDoEntryData,
     if (entry.entryID in childMap) {
         const children = Array.from(childMap[entry.entryID].entries().map(
             ([_id, childData], childID, _map) => {
-                console.log("Making child of ", entry.entryID, " with data:", childData);
                 return buildEntry(listID, childData, childMap);
             }
         ));
@@ -59,7 +57,6 @@ export async function fetchList(listID: number): ToDoListState | null {
     // Valid list, can get entry data
     const listEntries = await queryListTopLevelEntries(listID);
     const childMap = await fetchEntryChildrenMap(listID);
-    console.log(childMap);
 
     // Build entries
     const children = listEntries.map(

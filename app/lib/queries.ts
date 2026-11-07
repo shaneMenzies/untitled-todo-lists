@@ -15,9 +15,22 @@ export async function queryListName(listID: number): string | null {
     try {
         const query = 'SELECT ToDoList.listName FROM ToDoList WHERE listID = ?;';
         const [rows, fields] = await pool.execute(query, [listID]);
+        console.log(rows);
         const results = (rows.length > 0 ? rows[0].listName : null);
-        console.log(results);
         return results
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+export async function queryListNameBatch(listIDs: number[]) : Map<number, string> {
+    try {
+        const query = 'SELECT * FROM ToDoList WHERE listID IN (?);';
+        // can't use execute with an array value
+        const [rows, fields] = await pool.query(query, [listIDs]);
+        const results = new Map();
+        rows.forEach((row) => {results.set(row.listID, row.listName);});
+        return results;
     } catch (err) {
         console.log(err);
     }
@@ -32,7 +45,6 @@ export async function queryListEntries(listID: number): Array<ToDoEntryData> {
                 entryID: x.entryID, checked: x.checked[0] == 1, description: x.description
             }}
         );
-        console.log(results);
         return results
     } catch (err) {
         console.log(err);
@@ -52,7 +64,6 @@ export async function queryListTopLevelEntries(listID: number): Array<ToDoEntryD
                 entryID: x.entryID, checked: x.checked[0] == 1, description: x.description
             }}
         );
-        console.log(results);
         return results
     } catch (err) {
         console.log(err);
@@ -74,7 +85,6 @@ export async function queryListChildLevelEntries(listID: number): Array<[number,
                 entryID: x.childID, checked: x.checked[0] == 1, description: x.description
             }]}
         );
-        console.log(results);
         return results
     } catch (err) {
         console.log(err);
@@ -90,8 +100,32 @@ export async function queryListEntryChildren(listID: number): Array<EntryChildre
                 parentID: x.parentID, childID: x.childID
             }}
         );
-        console.log(results);
         return results
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+export async function queryNextEntryIDFor(listID: number): number {
+    try {
+        const query = `SELECT MAX(entryID) as newID FROM ToDoEntry 
+                        WHERE listID = ?;`;
+        const [rows, fields] = await pool.execute(query, [listID]);
+        const results = rows[0].newID;
+        return results + 1;
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+export async function insertNewList(listName: string): number {
+    try {
+        const query1 = `SELECT MAX(listID) as newID FROM ToDoList`;
+        let [rows, fields] = await pool.execute(query1);
+        const newID = rows[0].newID + 1;
+        const query2 = `INSERT INTO ToDoList(listID, listName) VALUES (?, ?)`;
+        [rows, fields] = await pool.execute(query2, [newID, listName]);
+        return newID;
     } catch (err) {
         console.log(err);
     }
@@ -99,10 +133,9 @@ export async function queryListEntryChildren(listID: number): Array<EntryChildre
 
 export async function updateListName(listID: number, name: string) {
     try {
-        const query = "UPDATE ToDoList SET name = ? WHERE listID = ?";
+        const query = "UPDATE ToDoList SET listName = ? WHERE listID = ?";
         const vals = [name, listID];
         const [results, fields] = await pool.execute(query, vals);
-        console.log(results);
     } catch (err) {
         console.log(err);
     }
@@ -110,10 +143,9 @@ export async function updateListName(listID: number, name: string) {
 
 export async function updateEntryChecked(listID: number, entryID: number, checked: boolean) {
     try {
-        const query = "UPDATE ToDoEntry SET checked = ? WHERE listID = ?, entryID = ?";
+        const query = "UPDATE ToDoEntry SET checked = ? WHERE ToDoEntry.listID = ? AND ToDoEntry.entryID = ?";
         const vals = [checked ? 1 : 0, listID, entryID];
         const [results, fields] = await pool.execute(query, vals);
-        console.log(results);
     } catch (err) {
         console.log(err);
     }
@@ -121,10 +153,9 @@ export async function updateEntryChecked(listID: number, entryID: number, checke
 
 export async function updateEntryDescription(listID: number, entryID: number, description: string) {
     try {
-        const query = "UPDATE ToDoEntry SET description = ? WHERE listID = ?, entryID = ?";
+        const query = "UPDATE ToDoEntry SET description = ? WHERE listID = ? AND entryID = ?";
         const vals = [description, listID, entryID];
         const [results, fields] = await pool.execute(query, vals);
-        console.log(results);
     } catch (err) {
         console.log(err);
     }
@@ -133,10 +164,20 @@ export async function updateEntryDescription(listID: number, entryID: number, de
 export async function updateEntryParent(listID: number, prevParentID: number, childID: number,
                                        newParentID: number) {
     try {
-        const query = "UPDATE EntryChildren SET parentID = ? WHERE listID = ?, parentID = ?, childID = ?";
+        const query = "UPDATE EntryChildren SET parentID = ? WHERE listID = ? AND parentID = ? AND childID = ?";
         const vals = [newParentID, listID, prevParentID, childID];
         const [results, fields] = await pool.execute(query, vals);
-        console.log(results);
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+export async function deleteEntry(listID: number, entryID: number) {
+    try {
+        const query1 = `DELETE FROM EntryChildren WHERE LISTID = ? AND (parentID = ? OR childID = ?)`;
+        const query2 = `DELETE FROM ToDoEntry WHERE listID = ? AND entryID = ?`;
+        let [results, fields] = await pool.execute(query1, [listID, entryID, entryID]);
+        [results, fields] = await pool.execute(query2, [listID, entryID]);
     } catch (err) {
         console.log(err);
     }
@@ -144,10 +185,21 @@ export async function updateEntryParent(listID: number, prevParentID: number, ch
 
 export async function deleteEntryChild(listID: number, parentID: number, childID: number) {
     try {
-        const query = "DELETE FROM EntryChildren WHERE listID = ?, parentID = ?, childID = ?";
+        const query = "DELETE FROM EntryChildren WHERE listID = ? AND parentID = ? AND childID = ?";
         const vals = [listID, parentID, childID];
         const [results, fields] = await pool.execute(query, vals);
-        console.log(results);
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+
+
+export async function insertEntry(listID: number, entryID: number, checked: boolean, description: string) {
+    try {
+        const query = "INSERT INTO ToDoEntry(listID, entryID, checked, description) VALUES (?, ?, ?, ?)";
+        const vals = [listID, entryID, checked ? 1 : 0, description];
+        const [results, fields] = await pool.execute(query, vals);
     } catch (err) {
         console.log(err);
     }
@@ -158,7 +210,6 @@ export async function insertEntryChild(listID: number, parentID: number, childID
         const query = "INSERT INTO EntryChildren(listID, parentID, childID) VALUES (?, ?, ?)";
         const vals = [listID, parentID, childID];
         const [results, fields] = await pool.execute(query, vals);
-        console.log(results);
     } catch (err) {
         console.log(err);
     }

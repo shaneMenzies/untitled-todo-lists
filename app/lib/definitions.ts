@@ -1,6 +1,6 @@
 import {UserData, ToDoListData, ToDoEntryData} from './data-definitions.ts';
-import {updateListName, updateEntryChecked, updateEntryDescription,
-        deleteEntryChild, updateEntryParent, insertEntryChild} from './queries.ts';
+import {updateListName, updateEntryChecked, updateEntryDescription, queryNextEntryIDFor,
+        deleteEntryChild, updateEntryParent, insertEntryChild, insertEntry, deleteEntry} from './queries.ts';
 
 export type ToDoListState = {
     id: number;
@@ -11,18 +11,15 @@ export type ToDoListState = {
 export class ToDoListWrapper {
     state: ToDoListState;
 
+    constructor(state: ToDoListState);
     constructor(id: number, name: string, entries: ToDoEntryState[]) {
-        this.state = {
-            id: id, name: name, children: entries
-        };
-
-        entries.forEach((entry) => {
-            entry.parent = this.state;
-        });
-    }
-
-    constructor(state: ToDoListState) {
-        this.state = state;
+        if (arguments.length == 1) {
+            this.state = arguments[0];
+        } else {
+            this.state = {
+                id: id, name: name, children: entries
+            };
+        }
     }
 
     get id(): number {return this.state.id;}
@@ -34,6 +31,27 @@ export class ToDoListWrapper {
     }
 
     get children(): ToDoEntryState[] {return this.state.children;}
+
+    public async addNewEntry(description: string) {
+        const newID = await queryNextEntryIDFor(this.state.id);
+        await insertEntry(this.state.id, newID, false, description);
+
+        const entry = {id: newID, listID: this.state.id, checked: false, 
+            description: description, children: []};
+        this.state.children.push(entry);
+    }
+
+    public async deleteEntry(entryID: number) {
+        await deleteEntry(this.state.id, entryID);
+
+        // Find target in own children
+        const spliceIndex = this.state.children.findIndex((child) => child.id == entryID);
+        const removedVal = this.state.children[spliceIndex];
+
+        // Remove entry child
+        this.state.children.splice(spliceIndex, 1);
+        this.state.children.push(...removedVal.children);
+    }
 };
 
 export type ToDoEntryState = {
@@ -41,27 +59,23 @@ export type ToDoEntryState = {
     listID: number;
     checked: boolean;
     description: string;
-    parent: ToDoListState | ToDoEntryState | null;
     children: ToDoEntryState[];
 }
 
 export class ToDoEntryWrapper {
     state: ToDoEntryState;
 
-    constructor(id: number, listID: number, checked: boolean, description: string, parent = null, children = []) {
-        this.state = {
-            id: id, listID: listID, checked: checked,
-            description: description, parent: parent,
-            children: children
-        };
-
-        children.forEach(
-            (entry) => {entry.parent = this;}
-        );
-    }
-
-    constructor(state: ToDoEntryState) {
-        this.state = state;
+    constructor(state: ToDoEntryState);
+    constructor(id: number, listID: number, checked: boolean, description: string, children = []) {
+        if (arguments.length == 1) {
+            this.state = arguments[0];
+        } else {
+            this.state = {
+                id: id, listID: listID, checked: checked,
+                description: description,
+                children: children
+            };
+        }
     }
 
     get id(): number {return this.state.id;}
@@ -79,38 +93,27 @@ export class ToDoEntryWrapper {
         updateEntryDescription(this.listID, this.id, val);
     }
 
-    get parent(): ToDoListState | ToDoEntryState | null {return this.state.parent;}
-    set parent(val: ToDoList) {
-        if (val.id != this.listID) {
-            throw new Error("Attempted to move list entry between lists by changing ToDoEntry.parent!");
-        }
-
-        // Remove this from previous parent
-        this.state.parent.children.splice(this.state.parent.children.indexOf(this), 1);
-        if (this.parent instanceof ToDoEntry) {
-            // Remove this from previous parent entry
-            deleteEntryChild(this.listID, this.parent.id, this.id);
-        }
-        this.state.parent = val;
-    }
-
-    set parent(val: ToDoEntry) {
-        if (val.listID != this.listID) {
-            throw new Error("Attempted to move list entry between lists by changing ToDoEntry.parent!");
-        }
-
-        // Remove this from previous parent
-        this.state.parent.children.splice(this.state.parent.children.indexOf(this), 1);
-        if (this.state.parent instanceof ToDoEntry) {
-            // Update existing child entry
-            updateEntryParent(this.listID, this.state.parent.id, this.id, val.id);
-        } else {
-            // Add new child entry
-            insertEntryChild(this.listID, val.id, this.id);
-        }
-        this.state.parent = val;
-        val.state.children.push(this);
-    }
-
     get children(): ToDoEntryState[] {return this.state.children;}
+
+    public async addNewEntry(description: string) {
+        const newID = await queryNextEntryIDFor(this.state.listID);
+        await insertEntry(this.state.listID, newID, false, description);
+        await insertEntryChild(this.state.listID, this.id, newID);
+
+        const entry = {id: newID, listID: this.state.listID, checked: false, 
+            description: description, children: []};
+        this.state.children.push(entry);
+    }
+
+    public async deleteEntry(entryID: number) {
+        await deleteEntry(this.state.listID, entryID);
+
+        // Find target in own children
+        const spliceIndex = this.state.children.findIndex((child) => child.id == entryID);
+        const removedVal = this.state.children[spliceIndex];
+
+        // Remove entry child
+        this.state.children.splice(spliceIndex, 1);
+        this.state.children.push(...removedVal.children);
+    }
 };
