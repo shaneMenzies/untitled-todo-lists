@@ -11,11 +11,20 @@ const pool = mysql.createPool({
     database: process.env.MYSQL_DATABASE
 });
 
+export async function queryDatabaseStatus(): Promise<any> {
+    try {
+        const query = 'SHOW STATUS;';
+        const [rows, fields] = await pool.execute(query);
+        return rows
+    } catch (err) {
+        console.log(err);
+    }
+}
+
 export async function queryListName(listID: number): Promise<string | null> {
     try {
         const query = 'SELECT ToDoList.listName FROM ToDoList WHERE listID = ?;';
         const [rows, fields] = await pool.execute(query, [listID]);
-        console.log(rows);
         const results = ('listName' in rows[0] ? rows[0].listName : null);
         return results
     } catch (err) {
