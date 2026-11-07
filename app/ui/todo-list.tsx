@@ -79,8 +79,9 @@ export default function ToDoList({listDataFn}) {
                 <input className="field-sizing-content min-w-64 border-[2px] rounded-md mx-2" type="text" id="list_add_new_entry" />
                 <div className="place-content-center cursor-pointer border-[1px] rounded-md shrink px-2" 
                     onClick={(e) => {
-                    addNewEntry((e.target as HTMLInputElement).value);
-                    (e.target as HTMLInputElement).value = '';
+                    const inputBox = document.getElementById("list_add_new_entry") as HTMLInputElement;
+                    addNewEntry(inputBox.value);
+                    inputBox.value = '';
                 }}>
                     +
                 </div>
