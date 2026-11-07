@@ -2,7 +2,7 @@
 
 import mysql from "mysql2/promise";
 
-import {ToDoListData, ToDoEntryData} from "./data-definitions.ts";
+import {ToDoListData, ToDoEntryData, EntryChildrenData} from "./data-definitions.ts";
 
 const pool = mysql.createPool({
     host: process.env.MYSQL_HOST,
@@ -11,36 +11,36 @@ const pool = mysql.createPool({
     database: process.env.MYSQL_DATABASE
 });
 
-export async function queryListName(listID: number): string | null {
+export async function queryListName(listID: number): Promise<string | null> {
     try {
         const query = 'SELECT ToDoList.listName FROM ToDoList WHERE listID = ?;';
         const [rows, fields] = await pool.execute(query, [listID]);
         console.log(rows);
-        const results = (rows.length > 0 ? rows[0].listName : null);
+        const results = ('listName' in rows[0] ? rows[0].listName : null);
         return results
     } catch (err) {
         console.log(err);
     }
 }
 
-export async function queryListNameBatch(listIDs: number[]) : Map<number, string> {
+export async function queryListNameBatch(listIDs: number[]) : Promise<Map<number, string>> {
     try {
         const query = 'SELECT * FROM ToDoList WHERE listID IN (?);';
         // can't use execute with an array value
         const [rows, fields] = await pool.query(query, [listIDs]);
         const results = new Map();
-        rows.forEach((row) => {results.set(row.listID, row.listName);});
+        (rows as any).forEach((row) => {results.set(row.listID, row.listName);});
         return results;
     } catch (err) {
         console.log(err);
     }
 }
 
-export async function queryListEntries(listID: number): Array<ToDoEntryData> {
+export async function queryListEntries(listID: number): Promise<Array<ToDoEntryData>> {
     try {
         const query = 'SELECT * FROM ToDoEntry WHERE listID = ? ORDER BY entryID ASC;';
         const [rows, fields] = await pool.execute(query, [listID]);
-        const results = rows.map(
+        const results = (rows as any).map(
             (x) => {return {
                 entryID: x.entryID, checked: x.checked[0] == 1, description: x.description
             }}
@@ -51,7 +51,7 @@ export async function queryListEntries(listID: number): Array<ToDoEntryData> {
     }
 }
 
-export async function queryListTopLevelEntries(listID: number): Array<ToDoEntryData> {
+export async function queryListTopLevelEntries(listID: number): Promise<Array<ToDoEntryData>> {
     try {
         const query = `SELECT * FROM ToDoEntry 
                         WHERE listID = ?
@@ -59,7 +59,7 @@ export async function queryListTopLevelEntries(listID: number): Array<ToDoEntryD
                                 (SELECT childID FROM EntryChildren WHERE listID = ?)
                             ORDER BY entryID ASC`;
         const [rows, fields] = await pool.execute(query, [listID, listID]);
-        const results = rows.map(
+        const results = (rows as any).map(
             (x) => {return {
                 entryID: x.entryID, checked: x.checked[0] == 1, description: x.description
             }}
@@ -70,7 +70,7 @@ export async function queryListTopLevelEntries(listID: number): Array<ToDoEntryD
     }
 }
 
-export async function queryListChildLevelEntries(listID: number): Array<[number, ToDoEntryData]> {
+export async function queryListChildLevelEntries(listID: number): Promise<Array<[number, ToDoEntryData]>> {
     try {
         const query = `SELECT ToDoEntry.listID, parentID, childID, checked, description  
                         FROM (ToDoEntry
@@ -80,7 +80,7 @@ export async function queryListChildLevelEntries(listID: number): Array<[number,
                         WHERE ToDoEntry.listID = ?
                         ORDER BY parentID ASC`;
         const [rows, fields] = await pool.execute(query, [listID]);
-        const results = rows.map(
+        const results = (rows as any).map(
             (x) => {return [x.parentID, {
                 entryID: x.childID, checked: x.checked[0] == 1, description: x.description
             }]}
@@ -91,11 +91,11 @@ export async function queryListChildLevelEntries(listID: number): Array<[number,
     }
 }
 
-export async function queryListEntryChildren(listID: number): Array<EntryChildrenData> {
+export async function queryListEntryChildren(listID: number): Promise<Array<EntryChildrenData>> {
     try {
         const query = 'SELECT * FROM EntryChildren WHERE listID = ? ORDER BY parentID ASC';
         const [rows, fields] = await pool.execute(query, [listID]);
-        const results = rows.map(
+        const results = (rows as any).map(
             (x) => {return {
                 parentID: x.parentID, childID: x.childID
             }}
@@ -106,7 +106,7 @@ export async function queryListEntryChildren(listID: number): Array<EntryChildre
     }
 }
 
-export async function queryNextEntryIDFor(listID: number): number {
+export async function queryNextEntryIDFor(listID: number): Promise<number> {
     try {
         const query = `SELECT MAX(entryID) as newID FROM ToDoEntry 
                         WHERE listID = ?;`;
@@ -118,7 +118,7 @@ export async function queryNextEntryIDFor(listID: number): number {
     }
 }
 
-export async function insertNewList(listName: string): number {
+export async function insertNewList(listName: string): Promise<number> {
     try {
         const query1 = `SELECT MAX(listID) as newID FROM ToDoList`;
         let [rows, fields] = await pool.execute(query1);

@@ -54,8 +54,8 @@ export default function ListEntry({entryDataFn, children}) {
                     <label htmlFor={"entryChecked"+state.id.toString()}>
                         <input className="field-sizing-content min-w-32 border-[1px] rounded-md mx-2 px-1"
                             type="text" id="edit_entry" defaultValue={state.description} 
-                            onChange={() => {
-                                updateEditValue(edit_entry.value);
+                            onChange={(e) => {
+                                updateEditValue(e.target.value);
                             }}/>
                     </label>
                     <div className="place-content-center cursor-pointer border-[1px] rounded-md shrink px-1 mx-1" 
@@ -81,7 +81,7 @@ export default function ListEntry({entryDataFn, children}) {
         {state.children.length > 0 ?
             (<div className="ml-4">
                 {Array.from(state.children).map(
-                    (entry) => (<div key={entry.id}>
+                    (entry: ToDoEntryState) => (<div key={entry.id}>
                         <ListEntry entryDataFn={() => {return entry;}}>
                         <div className="place-content-center cursor-pointer border-[1px] rounded-md shrink px-1 mx-1" 
                             onClick={() => {

@@ -6,14 +6,15 @@ import Link from 'next/link';
 import {queryListNameBatch} from '@/app/lib/queries.ts';
 
 function loadHistory() {
-    let localHistory = localStorage.getItem("recentLists");
-    if (localHistory != null) {
-        localHistory = JSON.parse(localHistory);
+    let localHistoryString = localStorage.getItem("recentLists");
+    let localHistory: number[];
+    if (localHistoryString != null) {
+        localHistory = JSON.parse(localHistoryString).map((a) => Number(a));
     } else {
         localHistory = [];
     }
 
-    return localHistory.map((a) => Number(a));
+    return localHistory;
 }
 
 export default function RecentLists() {

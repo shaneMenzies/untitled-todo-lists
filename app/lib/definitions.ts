@@ -1,4 +1,4 @@
-import {UserData, ToDoListData, ToDoEntryData} from './data-definitions.ts';
+import {ToDoListData, ToDoEntryData} from './data-definitions.ts';
 import {updateListName, updateEntryChecked, updateEntryDescription, queryNextEntryIDFor,
         deleteEntryChild, updateEntryParent, insertEntryChild, insertEntry, deleteEntry} from './queries.ts';
 
@@ -11,15 +11,8 @@ export type ToDoListState = {
 export class ToDoListWrapper {
     state: ToDoListState;
 
-    constructor(state: ToDoListState);
-    constructor(id: number, name: string, entries: ToDoEntryState[]) {
-        if (arguments.length == 1) {
-            this.state = arguments[0];
-        } else {
-            this.state = {
-                id: id, name: name, children: entries
-            };
-        }
+    constructor(state: ToDoListState) {
+        this.state = state;
     }
 
     get id(): number {return this.state.id;}
@@ -65,17 +58,8 @@ export type ToDoEntryState = {
 export class ToDoEntryWrapper {
     state: ToDoEntryState;
 
-    constructor(state: ToDoEntryState);
-    constructor(id: number, listID: number, checked: boolean, description: string, children = []) {
-        if (arguments.length == 1) {
-            this.state = arguments[0];
-        } else {
-            this.state = {
-                id: id, listID: listID, checked: checked,
-                description: description,
-                children: children
-            };
-        }
+    constructor(state: ToDoEntryState) {
+        this.state = state;
     }
 
     get id(): number {return this.state.id;}

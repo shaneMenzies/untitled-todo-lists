@@ -4,7 +4,7 @@ import {useState, useEffect} from 'react';
 
 import {ToDoListState, ToDoListWrapper, ToDoEntryWrapper} from '@/app/lib/definitions.ts';
 import {fetchList} from '@/app/lib/fetches.ts';
-import {queryNextEntryIDFor} from '@/app/lib/fetches.ts';
+import {queryNextEntryIDFor} from '@/app/lib/queries.ts';
 import ListEntry from '@/app/ui/list-entry.tsx';
 
 export default function ToDoList({listDataFn}) {
@@ -44,8 +44,8 @@ export default function ToDoList({listDataFn}) {
             {isEditing ? 
                 (<div className="flex m-2">
                     <input className="field-sizing-content mx-1" type="text" id="edit_entry" defaultValue={state.name} 
-                        onChange={() => {
-                            updateEditValue(edit_entry.value);
+                        onChange={(e) => {
+                            updateEditValue(e.target.value);
                     }}/>
                     <div className="place-content-center cursor-pointer border-[1px] rounded-md shrink px-1 mx-1" 
                         onClick={() => {stopEditing();}}>
@@ -78,9 +78,9 @@ export default function ToDoList({listDataFn}) {
             <div className="flex m-2" id="list-add-new-div">
                 <input className="field-sizing-content min-w-64 border-[2px] rounded-md mx-2" type="text" id="list_add_new_entry" />
                 <div className="place-content-center cursor-pointer border-[1px] rounded-md shrink px-2" 
-                    onClick={() => {
-                    addNewEntry(list_add_new_entry.value);
-                    list_add_new_entry.value = '';
+                    onClick={(e) => {
+                    addNewEntry((e.target as HTMLInputElement).value);
+                    (e.target as HTMLInputElement).value = '';
                 }}>
                     +
                 </div>

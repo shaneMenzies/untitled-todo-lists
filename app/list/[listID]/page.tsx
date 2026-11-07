@@ -11,9 +11,10 @@ const MAX_LOCAL_HISTORY_LEN = 15;
 
 async function updateHistory(listID: number) {
     // Get/make history stored in browser
-    let localHistory = localStorage.getItem("recentLists");
-    if (localHistory != null) {
-        localHistory = JSON.parse(localHistory);
+    let localHistoryString = localStorage.getItem("recentLists");
+    let localHistory: number[];
+    if (localHistoryString != null) {
+        localHistory = JSON.parse(localHistoryString).map((a) => Number(a));
     } else {
         localHistory = [];
     }
@@ -36,7 +37,7 @@ async function updateHistory(listID: number) {
 }
 
 export default function ListPage() {
-    const queriedListID = useParams().listID;
+    const queriedListID = Number(useParams().listID);
     const [listState, updateListState] = useState<ToDoListState>();
 
     useEffect(() => {
